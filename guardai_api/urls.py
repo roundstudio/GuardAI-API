@@ -5,6 +5,7 @@ from camera.views import CameraViewSet
 from notification.views import NotificationViewSet
 from alert.views import AlertViewSet
 from stream.views import StreamView
+from stream.views import GpioView
 
 router = routers.DefaultRouter()
 router.register(r'cameras', CameraViewSet)
@@ -15,4 +16,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
     path('api/stream/<int:cameraId>/', StreamView.as_view(), name='stream'),
+    path('api/gpio/<int:pin>/<int:durtion>/', GpioView.as_view(), name='gpio'),
 ]

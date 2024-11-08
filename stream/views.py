@@ -5,6 +5,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from utilse.ip_camera import IPCamera
+import RPi.GPIO as GPIO
+import time
 
 class StreamView(APIView):
     def generate_frames(self, ip_camera):
@@ -41,3 +43,14 @@ class StreamView(APIView):
             self.generate_frames(ip_camera),
             content_type='multipart/x-mixed-replace; boundary=frame'
         )
+
+
+class GpioView(APIView):
+    def get(self, request,pin,durtion):
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, GPIO.HIGH)
+        time.sleep(durtion)
+        GPIO.output(pin, GPIO.LOW)
+        GPIO.cleanup()
+        return Response({'message': f'{pin}, {durtion}'})
