@@ -9,8 +9,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
-
-# Application definition
+APPEND_SLASH = False
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -25,6 +24,8 @@ INSTALLED_APPS = [
     'notification',
     'rest_framework_simplejwt',
     'alert',
+    'gpio',
+    'object_detection',
     
 ]
 
