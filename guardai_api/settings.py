@@ -23,9 +23,9 @@ INSTALLED_APPS = [
     'camera',   
     'notification',
     'rest_framework_simplejwt',
-    'alert',
     'gpio',
     'object_detection',
+    'rule'
     
 ]
 
