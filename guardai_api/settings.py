@@ -25,7 +25,9 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'gpio',
     'object_detection',
-    'rule'
+    'rule',
+    'processor',
+    'background_task'
     
 ]
 
@@ -152,3 +154,9 @@ REST_FRAMEWORK = {
         
     )
 }
+
+
+
+# تنظیمات اختیاری
+MAX_ATTEMPTS = 1  # تعداد تلاش‌های مجدد در صورت خطا
+BACKGROUND_TASK_RUN_ASYNC = True  # اجرای همزمان چند تسک

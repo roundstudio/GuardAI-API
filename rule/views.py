@@ -8,7 +8,6 @@ from rest_framework.permissions import IsAuthenticated
 class RuleViewSet(viewsets.ModelViewSet):
     queryset = Rule.objects.all()
     serializer_class = RuleSerializer
-    permission_classes = [IsAuthenticated]
     
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
