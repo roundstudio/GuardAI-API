@@ -26,8 +26,8 @@ INSTALLED_APPS = [
     'gpio',
     'object_detection',
     'rule',
+    'django_apscheduler',
     'processor',
-    'background_task'
     
 ]
 
@@ -70,7 +70,10 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    },
+    'OPTIONS': {
+            'timeout': 20,  # زمان انتظار برای آزاد شدن قفل (به ثانیه)
+        }
 }
 
 
@@ -155,8 +158,13 @@ REST_FRAMEWORK = {
     )
 }
 
-
-
-# تنظیمات اختیاری
-MAX_ATTEMPTS = 1  # تعداد تلاش‌های مجدد در صورت خطا
-BACKGROUND_TASK_RUN_ASYNC = True  # اجرای همزمان چند تسک
+APSCHEDULER_DATETIME_FORMAT = "N j, Y, f:s a"  
+SCHEDULER_DEFAULT = {
+    'apscheduler.jobstores.default': {
+        'class': 'django_apscheduler.jobstores:DjangoJobStore'
+    },
+    'apscheduler.executors.default': {
+        'class': 'apscheduler.executors.pool:ThreadPoolExecutor',
+        'max_workers': '1'  # کاهش تعداد workers برای جلوگیری از تداخل
+    }
+}

@@ -23,9 +23,7 @@ router.register(r'rule', RuleViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include(router.urls)),
-    path('api/', include('processor.urls')),
     path('api/stream/<int:cameraId>/', StreamView.as_view(), name='stream'),
-
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 

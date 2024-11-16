@@ -11,5 +11,5 @@ class Camera(models.Model):
     description = models.TextField( null=True , blank=True)
 
     def __str__(self) -> str:
-        return f'{self.name}'
+        return f'<{self.name} - {self.ip} - {self.port} - {self.path} - {self.username} - {self.password}>'
 

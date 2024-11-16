@@ -1,18 +1,44 @@
-from background_task import background
-from django.utils import timezone
-from datetime import timedelta
+import logging
+from camera.models import Camera
 from rule.models import Rule
+from gpio.models import Gpio
+from object_detection.models import UserObjectRequest
+from utils.stream import IPCamera
 
-@background(schedule=5)
+import time
+
+# تنظیم لاگر
+logging.basicConfig(
+    filename='app.log',
+    filemode='a',
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.DEBUG
+)
+
+logger = logging.getLogger(__name__)
+
+# اضافه کردن StreamHandler برای نمایش در کنسول
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+console_handler.setFormatter(formatter)
+logger.addHandler(console_handler)
+
 def process_database_task():
-    for item in range(10):
-        try:
-            # پردازش آیتم
-            print(f"Processing item {item}")
-        except Exception as e:
-            print(f"Error processing item {item.id}: {str(e)}")
+    rules = Rule.objects.all()
+    for rule in rules:
+        logger.info(f"{rule.name}")
+        cameras = rule.camera.all()
 
-# تسک با پارامتر
-@background(schedule=timedelta(minutes=1))
-def another_task(param):
-    print(f"Processing with param: {param}")
+        object_types = rule.object_types.all()
+        gpio = rule.gpio.all()
+        while True:
+            camera = cameras.first()
+            logger.info(f"{camera}")
+            ip_camera = IPCamera(ip_address=camera.ip, username=camera.username, password=camera.password, port=camera.port, path=camera.path)
+            logger.info(ip_camera.connect())
+            time.sleep(5)
+
+
+
+
