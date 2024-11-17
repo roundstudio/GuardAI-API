@@ -4,7 +4,7 @@ from camera.models import Camera
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from utilse.ip_camera import IPCamera
+from utils.stream import IPCamera
 from rest_framework.permissions import IsAuthenticated
 # import RPi.GPIO as GPIO
 import time

@@ -14,8 +14,8 @@ class IPCamera:
             ip_address (str): آدرس IP دوربین
             username (str): نام کاربری
             password (str): رمز عبور
-            port (int): پورت اتصال (پیش‌فرض RTSP: 554)
-            path (str): مسیر دوربین
+            port (int): پورت اتصال
+            path (str): مسیر stream
         """
         self.ip_address = ip_address
         self.username = username
@@ -24,7 +24,8 @@ class IPCamera:
         self.path = path
         self.stream = None
         self.is_running = False
-        self.frame_queue = queue.Queue(maxsize=30)  # صف برای ذخیره فریم‌ها
+        self.frame_queue = queue.Queue(maxsize=1)  # فقط آخرین فریم
+        self.frame_skip = 3  # افزایش تعداد فریم‌های رد شده
         self.last_frame = None
         self.recording = False
         self.video_writer = None
@@ -32,9 +33,13 @@ class IPCamera:
     def build_stream_url(self, protocol='rtsp'):
         """ساخت URL جریان ویدیو"""
         if protocol.lower() == 'rtsp':
-            return f"rtsp://{self.username}:{self.password}@{self.ip_address}:{self.port}/{self.path}"
+            if self.username and self.password:
+                return f"rtsp://{self.username}:{self.password}@{self.ip_address}:{self.port}/{self.path}"
+            return f"rtsp://{self.ip_address}:{self.port}/{self.path}"
         elif protocol.lower() == 'http':
-            return f"http://{self.username}:{self.password}@{self.ip_address}:{self.port}/{self.path}"
+            if self.username and self.password:
+                return f"http://{self.username}:{self.password}@{self.ip_address}:{self.port}/{self.path}"
+            return f"http://{self.ip_address}:{self.port}/{self.path}"
         else:
             raise ValueError("پروتکل پشتیبانی نمی‌شود")
 
@@ -71,21 +76,30 @@ class IPCamera:
 
     def _stream_thread(self):
         """thread اصلی برای دریافت فریم‌ها"""
+        frame_count = 0
         while self.is_running:
             if self.stream and self.stream.isOpened():
                 ret, frame = self.stream.read()
+                frame_count += 1
+                
+                if frame_count % self.frame_skip != 0:
+                    continue
+                    
                 if ret:
-                    if self.frame_queue.full():
-                        self.frame_queue.get()  # حذف قدیمی‌ترین فریم اگر صف پر است
+                    # همیشه فریم قبلی را حذف کن
+                    if not self.frame_queue.empty():
+                        try:
+                            self.frame_queue.get_nowait()
+                        except:
+                            pass
+                    
                     self.frame_queue.put(frame)
                     self.last_frame = frame
-                    
-                    if self.recording and self.video_writer:
-                        self.video_writer.write(frame)
                 else:
                     print("خطا در خواندن فریم")
                     break
-            time.sleep(0.01)  # تاخیر کوچک برای کاهش مصرف CPU
+            
+            time.sleep(0.001)  # کاهش تاخیر
 
     def get_frame(self):
         """دریافت آخرین فریم"""
