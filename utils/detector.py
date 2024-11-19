@@ -1,5 +1,5 @@
 from transformers import YolosImageProcessor, YolosForObjectDetection
-import torch
+# import torch
 import cv2
 from PIL import Image
 import numpy as np
@@ -8,22 +8,21 @@ from queue import Queue
 import os
 import time
 from multiprocessing import Process, Queue, Lock
-import torch.multiprocessing as mp
+# import torch.multiprocessing as mp
 
 class ObjectDetector:
     def __init__(self, model_path="hustvl/yolos-tiny"):
         import warnings
         warnings.filterwarnings("ignore")
         
-        # غیرفعال کردن SSL verification
         os.environ['CURL_CA_BUNDLE'] = ''
         
-        # فعال کردن CUDA بنچمارک برای عملکرد بهتر
-        if torch.cuda.is_available():
-            torch.backends.cudnn.benchmark = True
-            torch.backends.cudnn.deterministic = False
+        # # فعال کردن CUDA بنچمارک برای عملکرد بهتر
+        # if torch.cuda.is_available():
+        #     torch.backends.cudnn.benchmark = True
+        #     torch.backends.cudnn.deterministic = False
         
-        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        # self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         
         self.processor = YolosImageProcessor.from_pretrained(
             model_path,
@@ -32,34 +31,33 @@ class ObjectDetector:
             local_files_only=False
         )
         
-        # استفاده از half precision در صورت پشتیبانی
-        if torch.cuda.is_available():
-            self.model = YolosForObjectDetection.from_pretrained(
-                model_path,
-                ignore_mismatched_sizes=True,
-                torch_dtype=torch.float16,
-                local_files_only=False
-            ).to(self.device).half()
-        else:
-            self.model = YolosForObjectDetection.from_pretrained(
-                model_path,
-                ignore_mismatched_sizes=True,
-                torch_dtype=torch.float32,
-                local_files_only=False
-            ).to(self.device)
+        # # استفاده از half precision در صورت پشتیبانی
+        # if torch.cuda.is_available():
+        #     self.model = YolosForObjectDetection.from_pretrained(
+        #         model_path,
+        #         ignore_mismatched_sizes=True,
+        #         torch_dtype=torch.float16,
+        #         local_files_only=False
+        #     ).to(self.device).half()
+        # else:
+        #     self.model = YolosForObjectDetection.from_pretrained(
+        #         model_path,
+        #         ignore_mismatched_sizes=True,
+        #         torch_dtype=torch.float32,
+        #         local_files_only=False
+        #     ).to(self.device)
         
-        self.model.eval()
+        # self.model.eval()
         
-        # برگرداندن به سایز اصلی
         self.input_size = (640, 480)
         
-        # حذف frame_queue و استفاده از یک متغیر مشترک
         self.latest_frame = None
-        self.frame_lock = mp.Lock()
-        self.result_queue = mp.Queue(maxsize=2)
+        # self.frame_lock = mp.Lock()
+        self.frame_lock = Lock()
+        # self.result_queue = mp.Queue(maxsize=2)
+        self.result_queue = Queue(maxsize=2)
         self.processing = True
         
-        # کاهش threshold برای تشخیص سریعتر
         self.detection_threshold = 0.9  
         
         self.skip_frames = 2
@@ -69,23 +67,22 @@ class ObjectDetector:
         self.max_buffer_size = 2
         self.frame_count = 0
         
-        # کش کردن نتایج
         self.result_cache = {}
-        self.cache_timeout = 0.5  # نیم ثانیه
+        self.cache_timeout = 0.5
 
-    @torch.inference_mode()
+    # @torch.inference_mode()
     def detect_objects(self, image, threshold=0.9):
-        # بهینه‌سازی حافظه با حذف تصاویر قدیمی
-        torch.cuda.empty_cache()
+        # # بهینه‌سازی حافظه با حذف تصاویر قدیمی
+        # torch.cuda.empty_cache()
         
         inputs = self.processor(images=image, return_tensors="pt")
-        # تبدیل نوع داده بر اساس دستگاه
-        if torch.cuda.is_available():
-            inputs = {k: v.to(self.device).half() for k, v in inputs.items()}
-            target_sizes = torch.tensor([image.size[::-1]], dtype=torch.float16).to(self.device)
-        else:
-            inputs = {k: v.to(self.device).float() for k, v in inputs.items()}
-            target_sizes = torch.tensor([image.size[::-1]], dtype=torch.float32).to(self.device)
+        # # تبدیل نوع داده بر اساس دستگاه
+        # if torch.cuda.is_available():
+        #     inputs = {k: v.to(self.device).half() for k, v in inputs.items()}
+        #     target_sizes = torch.tensor([image.size[::-1]], dtype=torch.float16).to(self.device)
+        # else:
+        #     inputs = {k: v.to(self.device).float() for k, v in inputs.items()}
+        #     target_sizes = torch.tensor([image.size[::-1]], dtype=torch.float32).to(self.device)
         
         outputs = self.model(**inputs)
         results = self.processor.post_process_object_detection(

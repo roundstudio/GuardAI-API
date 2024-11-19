@@ -7,6 +7,9 @@ from stream.views import StreamView
 from gpio.views import GpioView
 from object_detection.views import UserObjectRequestList
 from rule.views import RuleViewSet
+from contact.views import ContactViewSet
+from telegram.views import TelegramViewset
+
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -18,6 +21,8 @@ router.register(r'notifications', NotificationViewSet)
 router.register(r'gpio', GpioView)
 router.register(r'object-detection', UserObjectRequestList)
 router.register(r'rule', RuleViewSet)
+router.register(r'contact', ContactViewSet)
+router.register(r'telegram', TelegramViewset)
 
 
 urlpatterns = [
