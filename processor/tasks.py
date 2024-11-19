@@ -11,6 +11,8 @@ from concurrent.futures import ThreadPoolExecutor
 import threading
 from django.utils import timezone
 import queue
+import platform
+from utils.gpio import GPIOManager
 
 
 # تنظیم لاگر
@@ -30,6 +32,15 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 console_handler.setFormatter(formatter)
 logger.addHandler(console_handler)
 
+# تعریف متغیر سراسری برای مدیریت GPIO
+gpio_manager = None
+
+# بررسی سیستم عامل و راه‌اندازی GPIO در صورت نیاز
+if platform.system().lower() != 'windows':
+    try:
+        gpio_manager = GPIOManager()
+    except Exception as e:
+        logger.error(f"خطا در راه‌اندازی GPIO: {str(e)}")
 
 def process_camera(camera):
     window_name = f'Object Detection {camera.name}'
@@ -114,6 +125,19 @@ def process_camera(camera):
                                     
                                     for gpio in rule.gpio.all():
                                         logger.info(f"Detection: {object_name} (confidence: {score:.2f}) for rule: {rule.name} on GPIO Pin: {gpio.pin}")
+                                        
+                                        # فعال‌سازی GPIO فقط در سیستم‌عامل‌های غیر ویندوز
+                                        if gpio_manager is not None:
+                                            try:
+                                                # تنظیم پین به عنوان خروجی اگر قبلاً تنظیم نشده است
+                                                if gpio.pin not in gpio_manager.active_pins:
+                                                    gpio_manager.setup_pin(gpio.pin, "OUT", initial=False)
+                                                
+                                                # ارسال پالس به پین
+                                                gpio_manager.pulse_output(gpio.pin, duration=0.5)
+                                                
+                                            except Exception as e:
+                                                logger.error(f"خطا در کنترل GPIO {gpio.pin}: {str(e)}")
                             
                     # نمایش مستقیم فریم بدون تاخیر اضافی
                     cv2.imshow(window_name, processed_frame)
@@ -168,6 +192,20 @@ def process_database_task():
                 future.result()
             except Exception as e:
                 logger.error(f"خطا در پردازش دوربین: {str(e)}")
+
+def process_detection(detection_result, rule, gpio_pin):
+    """پردازش نتیجه تشخیص و کنترل GPIO"""
+    logger.info(f"Detection: {detection_result} for rule: {rule.name} on GPIO Pin: {gpio_pin}")
+    
+    # فقط در سیستم‌عامل‌های غیر ویندوز GPIO را کنترل کن
+    if platform.system().lower() != 'windows':
+        try:
+            if gpio_manager is not None:
+                if gpio_pin not in gpio_manager.active_pins:
+                    gpio_manager.setup_pin(gpio_pin, "OUT", initial=False)
+                gpio_manager.pulse_output(gpio_pin, duration=0.5)
+        except Exception as e:
+            logger.error(f"خطا در کنترل GPIO {gpio_pin}: {str(e)}")
 
 
 
