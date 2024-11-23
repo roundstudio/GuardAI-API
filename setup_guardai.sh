@@ -37,7 +37,8 @@ sudo apt install -y \
     libpq-dev \
     v4l-utils \
     python3-django \
-    python3-djangorestframework
+    python3-djangorestframework \
+    libcap-dev
 
 # فعال‌سازی دوربین رزبری پای
 echo -e "${YELLOW}فعال‌سازی دوربین رزبری پای...${NC}"
@@ -48,22 +49,17 @@ fi
 
 # ایجاد دایرکتوری پروژه
 echo -e "${YELLOW}ایجاد دایرکتوری پروژه...${NC}"
-if [ -d "~/guardai" ]; then
-    echo -e "${YELLOW}دایرکتوری guardai از قبل وجود دارد. در حال به‌روزرسانی...${NC}"
-    cd ~/guardai
-    # ذخیره تغییرات احتمالی محلی
-    git stash
-    # دریافت آخرین تغییرات
-    git fetch origin
-    # اعمال تغییرات
-    git reset --hard origin/main
-else
-    mkdir -p ~/guardai
-    cd ~/guardai
-    # کلون پروژه
-    echo -e "${YELLOW}دریافت کد از گیت‌هاب...${NC}"
-    git clone https://github.com/roundstudio/GuardAI-API.git .
+if [ -d "$HOME/guardai" ]; then
+    echo -e "${YELLOW}پاک کردن دایرکتوری قبلی...${NC}"
+    rm -rf "$HOME/guardai"
 fi
+
+mkdir -p "$HOME/guardai"
+cd "$HOME/guardai"
+
+# کلون پروژه
+echo -e "${YELLOW}دریافت کد از گیت‌هاب...${NC}"
+git clone https://github.com/roundstudio/GuardAI-API.git .
 
 # ایجاد محیط مجازی
 echo -e "${YELLOW}ایجاد محیط مجازی پایتون...${NC}"
@@ -74,14 +70,16 @@ source venv/bin/activate
 echo -e "${YELLOW}نصب پکیج‌های مورد نیاز...${NC}"
 pip install --upgrade pip wheel setuptools
 
-# نصب پکیج‌های اصلی
+# نصب پکیج‌های اصلی از requirements.txt موجود
 pip install -r requirements.txt
 
-# نصب پکیج‌های اضافی مورد نیاز
+# نصب پکیج‌های اضافی مورد نیاز برای رزبری پای
 pip install RPi.GPIO
 pip install picamera2
 pip install django-apscheduler
 pip install djangorestframework-simplejwt
+pip install python-telegram-bot
+pip install gunicorn
 
 # تنظیم فایل‌های استاتیک
 echo -e "${YELLOW}تنظیم فایل‌های استاتیک...${NC}"
@@ -120,7 +118,7 @@ echo -e "${YELLOW}ایجاد کاربر ادمین...${NC}"
 python manage.py createsuperuser
 
 # جمع‌آوری فایل‌های استاتیک
-echo -e "${YELLOW}جمع‌آوری فایل‌های استاتیک...${NC}"
+echo -e "${YELLOW}جمع‌آوری فایل‌های اتاتیک...${NC}"
 python manage.py collectstatic --noinput
 
 # نصب و تنظیم whitenoise
@@ -171,15 +169,6 @@ WorkingDirectory=$HOME/guardai
 Environment="PATH=$HOME/guardai/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=guardai_api.settings"
 Environment="PYTHONUNBUFFERED=1"
-EOL
-
-# اضافه کردن LD_PRELOAD فقط اگر فایل وجود داشته باشد
-if [ -n "$LIBATOMIC_PATH" ]; then
-    echo "Environment=\"LD_PRELOAD=$LIBATOMIC_PATH\"" | sudo tee -a /etc/systemd/system/guardai.service
-fi
-
-# ادامه تنظیمات سرویس
-sudo tee -a /etc/systemd/system/guardai.service << EOL
 ExecStart=$HOME/guardai/venv/bin/gunicorn guardai_api.wsgi:application --bind 0.0.0.0:8000
 Restart=always
 RestartSec=3
