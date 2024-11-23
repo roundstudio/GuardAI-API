@@ -48,12 +48,22 @@ fi
 
 # ایجاد دایرکتوری پروژه
 echo -e "${YELLOW}ایجاد دایرکتوری پروژه...${NC}"
-mkdir -p ~/guardai
-cd ~/guardai
-
-# کلون پروژه
-echo -e "${YELLOW}دریافت کد از گیت‌هاب...${NC}"
-git clone https://github.com/roundstudio/GuardAI-API.git .
+if [ -d "~/guardai" ]; then
+    echo -e "${YELLOW}دایرکتوری guardai از قبل وجود دارد. در حال به‌روزرسانی...${NC}"
+    cd ~/guardai
+    # ذخیره تغییرات احتمالی محلی
+    git stash
+    # دریافت آخرین تغییرات
+    git fetch origin
+    # اعمال تغییرات
+    git reset --hard origin/main
+else
+    mkdir -p ~/guardai
+    cd ~/guardai
+    # کلون پروژه
+    echo -e "${YELLOW}دریافت کد از گیت‌هاب...${NC}"
+    git clone https://github.com/roundstudio/GuardAI-API.git .
+fi
 
 # ایجاد محیط مجازی
 echo -e "${YELLOW}ایجاد محیط مجازی پایتون...${NC}"
