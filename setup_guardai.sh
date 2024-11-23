@@ -109,6 +109,21 @@ python manage.py createsuperuser
 echo -e "${YELLOW}جمع‌آوری فایل‌های استاتیک...${NC}"
 python manage.py collectstatic --noinput
 
+# نصب و تنظیم whitenoise
+pip install whitenoise
+
+# ایجاد دایرکتوری‌های مورد نیاز
+mkdir -p static
+mkdir -p staticfiles
+mkdir -p media
+
+# جمع‌آوری فایل‌های استاتیک
+python manage.py collectstatic --noinput --clear
+
+# تنظیم دسترسی‌ها
+sudo chown -R $USER:$USER static media staticfiles
+chmod -R 755 static media staticfiles
+
 # ایجاد سرویس systemd با تنظیمات مناسب برای رزبری پای
 echo -e "${YELLOW}ایجاد سرویس سیستمی...${NC}"
 sudo tee /etc/systemd/system/guardai.service << EOL
