@@ -138,7 +138,26 @@ python manage.py collectstatic --noinput --clear
 sudo chown -R $USER:$USER static media staticfiles
 chmod -R 755 static media staticfiles
 
-# ایجاد سرویس systemd با تنظیمات مناسب برای رزبری پای
+# نصب libatomic1
+echo -e "${YELLOW}نصب libatomic1...${NC}"
+sudo apt-get install -y libatomic1
+
+# بررسی وجود فایل libatomic
+if [ ! -f "/usr/lib/arm-linux-gnueabihf/libatomic.so.1" ]; then
+    echo -e "${RED}خطا: فایل libatomic.so.1 یافت نشد${NC}"
+    echo -e "${YELLOW}در حال جستجوی مسیر صحیح...${NC}"
+    LIBATOMIC_PATH=$(find /usr/lib -name "libatomic.so.1" | head -n 1)
+    if [ -n "$LIBATOMIC_PATH" ]; then
+        echo -e "${GREEN}فایل libatomic در مسیر $LIBATOMIC_PATH یافت شد${NC}"
+    else
+        echo -e "${RED}فایل libatomic یافت نشد. در حال حذف LD_PRELOAD...${NC}"
+        LIBATOMIC_PATH=""
+    fi
+else
+    LIBATOMIC_PATH="/usr/lib/arm-linux-gnueabihf/libatomic.so.1"
+fi
+
+# ایجاد سرویس systemd با تنظیمات به‌روز شده
 echo -e "${YELLOW}ایجاد سرویس سیستمی...${NC}"
 sudo tee /etc/systemd/system/guardai.service << EOL
 [Unit]
@@ -152,7 +171,15 @@ WorkingDirectory=$HOME/guardai
 Environment="PATH=$HOME/guardai/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=guardai_api.settings"
 Environment="PYTHONUNBUFFERED=1"
-Environment="LD_PRELOAD=/usr/lib/arm-linux-gnueabihf/libatomic.so.1"
+EOL
+
+# اضافه کردن LD_PRELOAD فقط اگر فایل وجود داشته باشد
+if [ -n "$LIBATOMIC_PATH" ]; then
+    echo "Environment=\"LD_PRELOAD=$LIBATOMIC_PATH\"" | sudo tee -a /etc/systemd/system/guardai.service
+fi
+
+# ادامه تنظیمات سرویس
+sudo tee -a /etc/systemd/system/guardai.service << EOL
 ExecStart=$HOME/guardai/venv/bin/gunicorn guardai_api.wsgi:application --bind 0.0.0.0:8000
 Restart=always
 RestartSec=3
