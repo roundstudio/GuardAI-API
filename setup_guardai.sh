@@ -83,8 +83,22 @@ pip install picamera2
 pip install django-apscheduler
 pip install djangorestframework-simplejwt
 
-# ایجاد دایرکتوری static
+# تنظیم فایل‌های استاتیک
+echo -e "${YELLOW}تنظیم فایل‌های استاتیک...${NC}"
+# پاک کردن فایل‌های استاتیک قبلی
+rm -rf static/*
+
+# ایجاد دایرکتوری‌های مورد نیاز
 mkdir -p static
+mkdir -p staticfiles
+mkdir -p media
+
+# جمع‌آوری مجدد فایل‌های استاتیک
+python manage.py collectstatic --noinput --clear
+
+# تنظیم دسترسی‌ها
+sudo chown -R $USER:$USER static media staticfiles
+chmod -R 755 static media staticfiles
 
 # ایجاد فایل .env
 echo -e "${YELLOW}ایجاد فایل .env...${NC}"
