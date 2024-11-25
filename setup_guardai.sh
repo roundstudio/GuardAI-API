@@ -118,7 +118,24 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://$(hostname -I | cut -d' ' -f1)
 DATABASE_URL=sqlite:///db.sqlite3
 EOL
 
-# اجرای مایگریشن‌ها
+# حذف پایگاه داده و مایگریشن‌ها
+echo -e "${YELLOW}حذف پایگاه داده و مایگریشن‌ها...${NC}"
+if [ -f db.sqlite3 ]; then
+    rm db.sqlite3
+    echo -e "${GREEN}پایگاه داده حذف شد.${NC}"
+fi
+
+# حذف پوشه‌های مایگریشن
+for app in rule camera notification gpio object_detection telegram contact stream processor; do
+    if [ -d "$app/migrations" ]; then
+        echo -e "${YELLOW}حذف مایگریشن‌های اپلیکیشن $app...${NC}"
+        rm -rf "$app/migrations/*"
+        # همچنین می‌توانید فایل __init__.py را حذف کنید تا پوشه خالی شود
+        rm -f "$app/migrations/__init__.py"
+    fi
+done
+
+# اجرای مایگریشن‌های دیتابیس
 echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
 python3 manage.py makemigrations rule
 python3 manage.py migrate rule
@@ -126,9 +143,30 @@ python3 manage.py migrate rule
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# ایجاد سوپریوزر
+# ایجاد کاربر ادمین به صورت خودکار
 echo -e "${YELLOW}ایجاد کاربر ادمین...${NC}"
-python3 manage.py createsuperuser
+python3 - << END
+import os
+import django
+from django.contrib.auth import get_user_model
+
+# تنظیمات Django را بارگذاری کنید
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'guardai_api.settings')
+django.setup()
+
+User = get_user_model()
+
+# ایجاد سوپر یوزر
+username = 'admin'
+password = 'admin123!@#'
+email = 'admin@example.com'  # می‌توانید ایمیل را تغییر دهید یا حذف کنید
+
+if not User.objects.filter(username=username).exists():
+    User.objects.create_superuser(username=username, email=email, password=password)
+    print("سوپر یوزر با موفقیت ایجاد شد.")
+else:
+    print("سوپر یوزر از قبل وجود دارد.")
+END
 
 # جمع‌آوری فایل‌های استاتیک
 echo -e "${YELLOW}جمع‌آوری فایل‌های اتاتیک...${NC}"
