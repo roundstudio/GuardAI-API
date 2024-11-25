@@ -183,7 +183,7 @@ After=network.target
 [Service]
 User=$USER
 Group=$USER
-WorkingDirectory=$HOME/guardai
+WorkingDirectory=$HOME/$USER/guardai
 Environment="DJANGO_SETTINGS_MODULE=guardai_api.settings"
 Environment="PYTHONUNBUFFERED=1"
 ExecStart=gunicorn guardai_api.wsgi:application --bind 0.0.0.0:8000 --timeout 120

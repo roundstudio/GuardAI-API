@@ -170,7 +170,9 @@ def setup_gpio():
 
 # پاک‌سازی GPIO
 def cleanup_gpio():
-    GPIO.cleanup()  # پاک‌سازی تمام کانال‌ها
+    """پاک‌سازی GPIO"""
+    if GPIO:
+        GPIO.cleanup()  # پاک‌سازی تمام کانال‌ها
 
 # در انتهای برنامه، حتماً cleanup_gpio() را فراخوانی کنید
 try:
