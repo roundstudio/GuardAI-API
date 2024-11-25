@@ -39,6 +39,20 @@ sudo apt install -y \
     python3-djangorestframework \
     libcap-dev
 
+# نصب پکیج‌های اضافی مورد نیاز برای رزبری پای
+pip install RPi.GPIO
+pip install picamera2
+pip install django-apscheduler
+pip install djangorestframework-simplejwt
+pip install python-telegram-bot
+pip install gunicorn
+pip install transformers
+pip install torch --index-url https://download.pytorch.org/whl/cpu  # نسخه سبک‌تر برای رزبری پای
+pip install torchvision --index-url https://download.pytorch.org/whl/cpu
+
+# نصب django-cors-headers
+pip install django-cors-headers
+
 # عال‌سازی دوربین رزبری پای
 echo -e "${YELLOW}فعال‌سازی دوربین رزبری پای...${NC}"
 if ! grep -q "start_x=1" /boot/config.txt; then
@@ -66,17 +80,6 @@ pip install --upgrade pip wheel setuptools
 
 # نصب پکیج‌های اصلی از requirements.txt موجود
 pip install -r requirements.txt
-
-# نصب پکیج‌های اضافی مورد نیاز برای رزبری پای
-pip install RPi.GPIO
-pip install picamera2
-pip install django-apscheduler
-pip install djangorestframework-simplejwt
-pip install python-telegram-bot
-pip install gunicorn
-pip install transformers
-pip install torch --index-url https://download.pytorch.org/whl/cpu  # نسخه سبک‌تر برای رزبری پای
-pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # تنظیم فایل‌های استاتیک
 echo -e "${YELLOW}تنظیم فایل‌های استاتیک...${NC}"
@@ -108,6 +111,9 @@ EOL
 
 # اجرای مایگریشن‌ها
 echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
+python3 manage.py makemigrations rule
+python3 manage.py migrate rule
+
 python3 manage.py makemigrations
 python3 manage.py migrate
 
