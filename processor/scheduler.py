@@ -11,4 +11,3 @@ def start():
 def run_tasks():
     # کد اصلی تسک اینجا
     process_database_task()
-    pass

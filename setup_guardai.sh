@@ -6,9 +6,22 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
+# قفل فایل
+LOCKFILE="/tmp/guardai.lock"
+
+# بررسی وجود قفل
+if [ -f "$LOCKFILE" ]; then
+    echo -e "${RED}اسکریپت در حال حاضر در حال اجرا است. لطفاً منتظر بمانید...${NC}"
+    exit 1
+fi
+
+# ایجاد قفل
+touch "$LOCKFILE"
+
 # بررسی رزبری پای
 if ! grep -q "Raspberry Pi" "/proc/cpuinfo"; then
     echo -e "${RED}این اسکریپت فقط برای رزبری پای طراحی شده است.${NC}"
+    rm -f "$LOCKFILE"  # حذف قفل در صورت خطا
     exit 1
 fi
 
@@ -138,8 +151,6 @@ for app in rule camera notification gpio object_detection telegram contact strea
 done
 
 # اجرای مایگریشن‌های دیتابیس
-
-
 python3 manage.py makemigrations
 python3 manage.py migrate
 
