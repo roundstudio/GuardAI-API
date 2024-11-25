@@ -37,7 +37,16 @@ sudo apt install -y \
     v4l-utils \
     python3-django \
     python3-djangorestframework \
-    libcap-dev
+    libcap-dev \
+    python3-venv  # نصب بسته venv برای ایجاد محیط مجازی
+
+# ایجاد محیط مجازی
+echo -e "${YELLOW}ایجاد محیط مجازی...${NC}"
+python3 -m venv venv
+
+# فعال‌سازی محیط مجازی
+echo -e "${YELLOW}فعال‌سازی محیط مجازی...${NC}"
+source venv/bin/activate
 
 # نصب پکیج‌های اضافی مورد نیاز برای رزبری پای
 pip install RPi.GPIO
