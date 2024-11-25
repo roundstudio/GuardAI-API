@@ -162,3 +162,20 @@ class GPIOManager:
         """پاکسازی خودکار در هنگام حذف شیء"""
         self.cleanup()
 
+# تنظیمات GPIO
+def setup_gpio():
+    GPIO.setmode(GPIO.BCM)  # یا GPIO.BOARD
+    # تنظیم کانال‌ها
+    GPIO.setup(18, GPIO.OUT)  # به عنوان مثال، پین 18 را به عنوان خروجی تنظیم کنید
+
+# پاک‌سازی GPIO
+def cleanup_gpio():
+    GPIO.cleanup()  # پاک‌سازی تمام کانال‌ها
+
+# در انتهای برنامه، حتماً cleanup_gpio() را فراخوانی کنید
+try:
+    setup_gpio()
+    # کدهای دیگر
+finally:
+    cleanup_gpio()
+

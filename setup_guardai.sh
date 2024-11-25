@@ -131,8 +131,7 @@ for app in rule camera notification gpio object_detection telegram contact strea
     if [ -d "$app/migrations" ]; then
         echo -e "${YELLOW}حذف مایگریشن‌های اپلیکیشن $app...${NC}"
         rm -rf "$app/migrations/*"
-        # همچنین می‌توانید فایل __init__.py را حذف کنید تا پوشه خالی شود
-        rm -f "$app/migrations/__init__.py"
+        rm -f "$app/migrations/__init__.py"  # حذف فایل __init__.py
     fi
     python3 manage.py makemigrations $app
     python3 manage.py migrate $app
