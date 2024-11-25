@@ -9,5 +9,8 @@ def start():
         thread.start()
 
 def run_tasks():
-    # کد اصلی تسک اینجا
-    process_database_task()
+    try:
+        # کد اصلی تسک اینجا
+        process_database_task()
+    except Exception as e:
+        print(f"An error occurred: {e}")
