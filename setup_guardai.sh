@@ -23,7 +23,6 @@ echo -e "${YELLOW}نصب پیش‌نیازهای سیستم...${NC}"
 sudo apt install -y \
     python3-pip \
     python3-dev \
-    python3-venv \
     git \
     libatlas-base-dev \
     python3-opencv \
@@ -40,7 +39,7 @@ sudo apt install -y \
     python3-djangorestframework \
     libcap-dev
 
-# فعال‌سازی دوربین رزبری پای
+# عال‌سازی دوربین رزبری پای
 echo -e "${YELLOW}فعال‌سازی دوربین رزبری پای...${NC}"
 if ! grep -q "start_x=1" /boot/config.txt; then
     sudo sh -c 'echo "start_x=1" >> /boot/config.txt'
@@ -61,11 +60,6 @@ cd "$HOME/guardai"
 echo -e "${YELLOW}دریافت کد از گیت‌هاب...${NC}"
 git clone https://github.com/roundstudio/GuardAI-API.git .
 
-# ایجاد محیط مجازی
-echo -e "${YELLOW}ایجاد محیط مجازی پایتون...${NC}"
-python3 -m venv venv
-source venv/bin/activate
-
 # نصب پکیج‌های پایتون
 echo -e "${YELLOW}نصب پکیج‌های مورد نیاز...${NC}"
 pip install --upgrade pip wheel setuptools
@@ -80,6 +74,9 @@ pip install django-apscheduler
 pip install djangorestframework-simplejwt
 pip install python-telegram-bot
 pip install gunicorn
+pip install transformers
+pip install torch --index-url https://download.pytorch.org/whl/cpu  # نسخه سبک‌تر برای رزبری پای
+pip install torchvision --index-url https://download.pytorch.org/whl/cpu
 
 # تنظیم فایل‌های استاتیک
 echo -e "${YELLOW}تنظیم فایل‌های استاتیک...${NC}"
@@ -92,7 +89,7 @@ mkdir -p staticfiles
 mkdir -p media
 
 # جمع‌آوری مجدد فایل‌های استاتیک
-python manage.py collectstatic --noinput --clear
+python3 manage.py collectstatic --noinput --clear
 
 # تنظیم دسترسی‌ها
 sudo chown -R $USER:$USER static media staticfiles
@@ -111,15 +108,15 @@ EOL
 
 # اجرای مایگریشن‌ها
 echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
-python manage.py migrate
+python3 manage.py migrate
 
 # ایجاد سوپریوزر
 echo -e "${YELLOW}ایجاد کاربر ادمین...${NC}"
-python manage.py createsuperuser
+python3 manage.py createsuperuser
 
 # جمع‌آوری فایل‌های استاتیک
 echo -e "${YELLOW}جمع‌آوری فایل‌های اتاتیک...${NC}"
-python manage.py collectstatic --noinput
+python3 manage.py collectstatic --noinput
 
 # نصب و تنظیم whitenoise
 pip install whitenoise
@@ -130,30 +127,11 @@ mkdir -p staticfiles
 mkdir -p media
 
 # جمع‌آوری فایل‌های استاتیک
-python manage.py collectstatic --noinput --clear
+python3 manage.py collectstatic --noinput --clear
 
 # تنظیم دسترسی‌ها
 sudo chown -R $USER:$USER static media staticfiles
 chmod -R 755 static media staticfiles
-
-# نصب libatomic1
-echo -e "${YELLOW}نصب libatomic1...${NC}"
-sudo apt-get install -y libatomic1
-
-# بررسی وجود فایل libatomic
-if [ ! -f "/usr/lib/arm-linux-gnueabihf/libatomic.so.1" ]; then
-    echo -e "${RED}خطا: فایل libatomic.so.1 یافت نشد${NC}"
-    echo -e "${YELLOW}در حال جستجوی مسیر صحیح...${NC}"
-    LIBATOMIC_PATH=$(find /usr/lib -name "libatomic.so.1" | head -n 1)
-    if [ -n "$LIBATOMIC_PATH" ]; then
-        echo -e "${GREEN}فایل libatomic در مسیر $LIBATOMIC_PATH یافت شد${NC}"
-    else
-        echo -e "${RED}فایل libatomic یافت نشد. در حال حذف LD_PRELOAD...${NC}"
-        LIBATOMIC_PATH=""
-    fi
-else
-    LIBATOMIC_PATH="/usr/lib/arm-linux-gnueabihf/libatomic.so.1"
-fi
 
 # ایجاد سرویس systemd با تنظیمات به‌روز شده
 echo -e "${YELLOW}ایجاد سرویس سیستمی...${NC}"
@@ -166,10 +144,9 @@ After=network.target
 User=$USER
 Group=$USER
 WorkingDirectory=$HOME/guardai
-Environment="PATH=$HOME/guardai/venv/bin"
 Environment="DJANGO_SETTINGS_MODULE=guardai_api.settings"
 Environment="PYTHONUNBUFFERED=1"
-ExecStart=$HOME/guardai/venv/bin/gunicorn guardai_api.wsgi:application --bind 0.0.0.0:8000
+ExecStart=gunicorn guardai_api.wsgi:application --bind 0.0.0.0:8000 --timeout 120
 Restart=always
 RestartSec=3
 
@@ -180,9 +157,6 @@ EOL
 # تنظیم دسترسی‌های مورد نیاز برای رزبری پای
 echo -e "${YELLOW}تنظیم دسترسی‌های سیستمی...${NC}"
 sudo usermod -a -G gpio,video,i2c,spi $USER
-
-# نصب و تنظیم gunicorn
-pip install gunicorn
 
 # راه‌اندازی و فعال‌سازی سرویس
 echo -e "${YELLOW}راه‌اندازی سرویس...${NC}"
