@@ -6,22 +6,9 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-# قفل فایل
-LOCKFILE="/tmp/guardai.lock"
-
-# بررسی وجود قفل
-if [ -f "$LOCKFILE" ]; then
-    echo -e "${RED}اسکریپت در حال حاضر در حال اجرا است. لطفاً منتظر بمانید...${NC}"
-    exit 1
-fi
-
-# ایجاد قفل
-touch "$LOCKFILE"
-
 # بررسی رزبری پای
 if ! grep -q "Raspberry Pi" "/proc/cpuinfo"; then
     echo -e "${RED}این اسکریپت فقط برای رزبری پای طراحی شده است.${NC}"
-    rm -f "$LOCKFILE"  # حذف قفل در صورت خطا
     exit 1
 fi
 
@@ -151,33 +138,21 @@ for app in rule camera notification gpio object_detection telegram contact strea
 done
 
 # اجرای مایگریشن‌های دیتابیس
+
+
 python3 manage.py makemigrations
 python3 manage.py migrate
 
-# ایجاد کاربر ادمین به صورت خودکار
+# ایجاد کاربر ادمین به صورت خودکار با استفاده از createsuperuser
 echo -e "${YELLOW}ایجاد کاربر ادمین...${NC}"
-python3 - << END
-import os
-import django
-from django.contrib.auth import get_user_model
+echo "from django.contrib.auth.models import User; User.objects.create_superuser('admin', 'admin@example.com', 'admin123!@#')" | python manage.py shell
 
-# تنظیمات Django را بارگذاری کنید
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'guardai_api.settings')
-django.setup()
-
-User = get_user_model()
-
-# ایجاد سوپر یوزر
-username = 'admin'
-password = 'admin123!@#'
-email = 'admin@example.com'  # می‌توانید ایمیل را تغییر دهید یا حذف کنید
-
-if not User.objects.filter(username=username).exists():
-    User.objects.create_superuser(username=username, email=email, password=password)
-    print("سوپر یوزر با موفقیت ایجاد شد.")
-else:
-    print("سوپر یوزر از قبل وجود دارد.")
-END
+# بررسی وجود کاربر و ایجاد در صورت عدم وجود
+if [ $? -ne 0 ]; then
+    echo -e "${YELLOW}سوپر یوزر از قبل وجود دارد یا خطایی در ایجاد آن رخ داده است.${NC}"
+else
+    echo -e "${GREEN}سوپر یوزر با موفقیت ایجاد شد.${NC}"
+fi
 
 # جمع‌آوری فایل‌های استاتیک
 echo -e "${YELLOW}جمع‌آوری فایل‌های اتاتیک...${NC}"
