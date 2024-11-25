@@ -108,6 +108,7 @@ EOL
 
 # اجرای مایگریشن‌ها
 echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
+python3 manage.py makemigrations
 python3 manage.py migrate
 
 # ایجاد سوپریوزر

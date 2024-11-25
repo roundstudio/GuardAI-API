@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,8 +119,7 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'static'
 STATICFILES_DIRS = [
-    BASE_DIR / 'staticfiles',
-    BASE_DIR / 'venv/lib/python3.9/site-packages/django/contrib/admin/static',
+    os.path.join(BASE_DIR, "static"),
 ]
 
 # اضافه کردن تنظیمات مدیا
