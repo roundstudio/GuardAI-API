@@ -125,6 +125,7 @@ if [ -f db.sqlite3 ]; then
     echo -e "${GREEN}پایگاه داده حذف شد.${NC}"
 fi
 
+echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
 # حذف پوشه‌های مایگریشن
 for app in rule camera notification gpio object_detection telegram contact stream processor; do
     if [ -d "$app/migrations" ]; then
@@ -133,12 +134,12 @@ for app in rule camera notification gpio object_detection telegram contact strea
         # همچنین می‌توانید فایل __init__.py را حذف کنید تا پوشه خالی شود
         rm -f "$app/migrations/__init__.py"
     fi
+    python3 manage.py makemigrations $app
+    python3 manage.py migrate $app
 done
 
 # اجرای مایگریشن‌های دیتابیس
-echo -e "${YELLOW}اجرای مایگریشن‌های دیتابیس...${NC}"
-python3 manage.py makemigrations rule
-python3 manage.py migrate rule
+
 
 python3 manage.py makemigrations
 python3 manage.py migrate
